@@ -5,8 +5,8 @@ mod util;
 use global_context::GlobalContext;
 use lazy_static::lazy_static;
 use log::info;
-use sdl2::gfx::primitives::DrawRenderer;
-use std::cell::RefCell;
+use sdl2::{gfx::primitives::DrawRenderer, sys::KeyCode};
+use std::{cell::RefCell, collections::HashSet};
 
 use sdl2::{pixels::Color, ttf::Sdl2TtfContext};
 use util::FPSCounter;
@@ -133,6 +133,8 @@ fn main() {
 
     let mut current_speed = (0.0, 0.0);
 
+    let mut pressed_keys: HashSet<sdl2::keyboard::Keycode> = HashSet::new();
+
     'running: loop {
         fps_counter.tick();
         for event in event_pump.poll_iter() {
@@ -151,55 +153,35 @@ fn main() {
                     bm.add_node();
                 }
                 sdl2::event::Event::KeyDown {
-                    keycode: Some(sdl2::keyboard::Keycode::W),
+                    keycode: Some(keycode),
                     ..
                 } => {
+                    pressed_keys.insert(keycode);
+                }
+                sdl2::event::Event::KeyUp {
+                    keycode: Some(keycode),
+                    ..
+                } => {
+                    pressed_keys.remove(&keycode);
+                }
+                _ => {}
+            }
+        }
+
+        for key in pressed_keys.iter() {
+            match *key {
+                sdl2::keyboard::Keycode::W => {
                     current_speed.1 = -move_speed;
                 }
-                sdl2::event::Event::KeyDown {
-                    keycode: Some(sdl2::keyboard::Keycode::A),
-                    ..
-                } => {
+                sdl2::keyboard::Keycode::A => {
                     current_speed.0 = -move_speed;
                 }
-                sdl2::event::Event::KeyDown {
-                    keycode: Some(sdl2::keyboard::Keycode::S),
-                    ..
-                } => {
+                sdl2::keyboard::Keycode::S => {
                     current_speed.1 = move_speed;
                 }
-                sdl2::event::Event::KeyDown {
-                    keycode: Some(sdl2::keyboard::Keycode::D),
-                    ..
-                } => {
+                sdl2::keyboard::Keycode::D => {
                     current_speed.0 = move_speed;
                 }
-
-                sdl2::event::Event::KeyUp {
-                    keycode: Some(sdl2::keyboard::Keycode::W),
-                    ..
-                } => {
-                    current_speed.1 = move_speed;
-                }
-                sdl2::event::Event::KeyUp {
-                    keycode: Some(sdl2::keyboard::Keycode::A),
-                    ..
-                } => {
-                    current_speed.0 = move_speed;
-                }
-                sdl2::event::Event::KeyUp {
-                    keycode: Some(sdl2::keyboard::Keycode::S),
-                    ..
-                } => {
-                    current_speed.1 = -move_speed;
-                }
-                sdl2::event::Event::KeyUp {
-                    keycode: Some(sdl2::keyboard::Keycode::D),
-                    ..
-                } => {
-                    current_speed.0 = -move_speed;
-                }
-
                 _ => {}
             }
         }
